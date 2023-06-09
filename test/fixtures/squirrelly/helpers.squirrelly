@@ -1,2 +1,2 @@
-{{myhelper(options.user.name)}}
+{{@myhelper(options.user.name)}}
 {{/myhelper}}

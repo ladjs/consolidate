@@ -1,38 +1,35 @@
-/*eslint-env node, mocha */
-var cons = require('../../');
-var fs = require('fs');
+const fs = require('node:fs');
+const test = require('ava');
+const cons = require('../../');
 
-// var should = require('should');
+exports.test = function (name) {
+  const user = { name: 'Tobi' };
 
-exports.test = function(name) {
-  var user = { name: 'Tobi' };
+  // Use case: return upper case string.
+  test(`${name} dust should support fetching template name from the context`, (t) => {
+    const viewsDir = 'test/fixtures/' + name;
+    const templatePath = viewsDir + '/user_template_name.' + name;
+    const str = fs.readFileSync(templatePath).toString();
 
-  describe(name, function() {
-    // Use case: return upper case string.
-    it('should support fetching template name from the context', function(done) {
-      var viewsDir = 'test/fixtures/' + name;
-      var templatePath = viewsDir + '/user_template_name.' + name;
-      var str = fs.readFileSync(templatePath).toString();
+    const locals = {
+      user,
+      views: viewsDir,
+      filename: templatePath
+    };
 
-      var locals = {
-        user: user,
-        views: viewsDir,
-        filename: templatePath
+    if (name === 'dust') {
+      const dust = require('dustjs-helpers');
+      dust.helpers.templateName = function (chunk, context) {
+        return chunk.write(context.getTemplateName());
       };
 
-      if (name === 'dust') {
-        var dust = require('dustjs-helpers');
-        dust.helpers.templateName = function(chunk, context) {
-          return chunk.write(context.getTemplateName());
-        };
-        cons.requires.dust = dust;
-      }
+      cons.requires.dust = dust;
+    }
 
-      cons[name].render(str, locals, function(err, html) {
-        if (err) return done(err);
-        html.should.eql('<p>Tobi</p>user_template_name');
-        return done();
-      });
+    cons[name].render(str, locals, function (err, html) {
+      t.is(err, null);
+      t.is(html, '<p>Tobi</p>user_template_name');
+      t.pass();
     });
   });
 };

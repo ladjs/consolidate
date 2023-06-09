@@ -1,29 +1,27 @@
 // npm install express
+const path = require('node:path');
+const express = require('../../express');
+const cons = require('../');
 
-var express = require('../../express');
-var cons = require('../');
-var app = express();
-var path = require('path');
+const app = express();
 
 app.engine('html', cons.swig);
 app.set('view engine', 'html');
 app.set('views', path.join(__dirname, 'views'));
 
-var users = [];
-users.push({ name: 'tobi' });
-users.push({ name: 'loki' });
-users.push({ name: 'jane' });
+const users = [];
+users.push({ name: 'tobi' }, { name: 'loki' }, { name: 'jane' });
 
-app.get('/', function(req, res) {
+app.get('/', function (req, res) {
   res.render('index', {
     title: 'Consolidate.js'
   });
 });
 
-app.get('/users', function(req, res) {
+app.get('/users', function (req, res) {
   res.render('users', {
     title: 'Users',
-    users: users
+    users
   });
 });
 

@@ -1,99 +1,72 @@
-/*eslint-env node, mocha */
-/*eslint  quotes: [2, "single"] */
-var consolidate = require('../../');
-var fs = require('fs');
+const { readFileSync } = require('node:fs');
+const test = require('ava');
+const consolidate = require('../../');
 
-var readFile = fs.readFile;
-var readFileSync = fs.readFileSync;
+exports.test = function (name) {
+  const user = { name: 'Tobi' };
+  let cons;
 
-exports.test = function(name) {
-  'use strict';
+  test.beforeEach(function () {
+    cons = consolidate;
+  });
 
-  var user = { name: 'Tobi' };
-  var cons;
-
-  describe(name, function() {
-
-    beforeEach(function() {
-      cons = consolidate;
-      fs.readFile = readFile;
-      fs.readFileSync = readFileSync;
+  test(`${name} react should support locals`, (t) => {
+    const path = 'test/fixtures/' + name + '/user.' + name;
+    const locals = { user };
+    cons[name](path, locals, function (err, html) {
+      t.is(err, null);
+      t.is(html, '<p>Tobi</p>');
+      t.pass();
     });
+  });
 
-    it('should support locals', function(done) {
-      var path = 'test/fixtures/' + name + '/user.' + name;
-      var locals = { user: user };
-      cons[name](path, locals, function(err, html) {
+  test(`${name} react should support promises`, async (t) => {
+    const path = 'test/fixtures/' + name + '/user.' + name;
+    const locals = { user };
+    const html = await cons[name](path, locals);
+    t.is(html, '<p>Tobi</p>');
+  });
 
-        if (err) {
-          return done(err);
-        }
+  test(`${name} react should support rendering a string`, (t) => {
+    const str = readFileSync(
+      'test/fixtures/' + name + '/user.' + name
+    ).toString();
+    const locals = { user };
 
-        html.should.equal('<p>Tobi</p>');
-        done();
-      });
+    cons[name].render(str, locals, function (err, html) {
+      t.is(err, null);
+      t.is(html, '<p>Tobi</p>');
+      t.pass();
     });
+  });
 
-    it('should support promises', function(done) {
-      var path = 'test/fixtures/' + name + '/user.' + name;
-      var locals = { user: user };
-      cons[name](path, locals)
-        .then(function(html) {
-          html.should.equal('<p>Tobi</p>');
-          done();
-        })
-        .catch(function(err) {
-          done(err);
-        });
+  test(`${name} react should support promises from a string`, async (t) => {
+    const str = readFileSync(
+      'test/fixtures/' + name + '/user.' + name
+    ).toString();
+    const locals = { user };
+
+    const html = await cons[name].render(str, locals);
+    t.is(html, '<p>Tobi</p>');
+    t.pass();
+  });
+
+  test(`${name} react should support rendering into a base template`, (t) => {
+    const path = 'test/fixtures/' + name + '/user.' + name;
+    const locals = {
+      user,
+      base: 'test/fixtures/' + name + '/base.html',
+      title: 'My Title'
+    };
+
+    cons[name](path, locals, function (err, html) {
+      t.is(err, null);
+
+      t.is(
+        html,
+        '<html><head><title>My Title</title></head><body><p>Tobi</p></body></html>'
+      );
+      t.pass();
     });
-
-    it('should support rendering a string', function(done) {
-      var str = fs.readFileSync('test/fixtures/' + name + '/user.' + name).toString();
-      var locals = { user: user };
-
-      cons[name].render(str, locals, function(err, html) {
-
-        if (err) {
-          return done(err);
-        }
-
-        html.should.equal('<p>Tobi</p>');
-        done();
-      });
-    });
-
-    it('should support promises from a string', function(done) {
-      var str = fs.readFileSync('test/fixtures/' + name + '/user.' + name).toString();
-      var locals = { user: user };
-
-      cons[name].render(str, locals)
-        .then(function(html) {
-          html.should.equal('<p>Tobi</p>');
-          done();
-        })
-        .catch(function(err) {
-          return done(err);
-        });
-    });
-
-    it('should support rendering into a base template', function(done) {
-      var path = 'test/fixtures/' + name + '/user.' + name;
-      var locals = {
-        user: user,
-        base: 'test/fixtures/' + name + '/base.html',
-        title: 'My Title'
-      };
-
-      cons[name](path, locals, function(err, html) {
-
-        if (err) {
-          return done(err);
-        }
-
-        html.should.equal('<html><head><title>My Title</title></head><body><p>Tobi</p></body></html>');
-        done();
-      });
-    });
-
   });
 };

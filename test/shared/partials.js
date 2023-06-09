@@ -1,60 +1,93 @@
+const { join } = require('node:path');
+const fs = require('node:fs');
+const test = require('ava');
+const cons = require('../../');
 
-var cons = require('../../');
-var join = require('path').join;
-var fs = require('fs');
-var readFile = fs.readFile;
-var readFileSync = fs.readFileSync;
+const { readFile } = fs;
+const { readFileSync } = fs;
 
-exports.test = function(name) {
-  var user = { name: 'Tobi' };
+function getName(name) {
+  return name === 'liquid-node' ? 'liquid' : name;
+}
 
-  describe(name, function() {
-    afterEach(function() {
-      fs.readFile = readFile;
-      fs.readFileSync = readFileSync;
-    });
+exports.test = function (name) {
+  const user = { name: 'Tobi' };
 
-    if (name === 'dust' || name === 'arc-templates') {
-      it('should support rendering a partial', function(done) {
-        var str = fs.readFileSync('test/fixtures/' + name + '/user_partial.' + name).toString();
-        var locals = {
-          user: user,
-          views: './test/fixtures/' + name
-        };
-        cons[name].render(str, locals, function(err, html) {
-          if (err) return done(err);
-          html.should.equal('<p>Tobi from partial!</p><p>Tobi</p>');
-          done();
-        });
-      });
-    } else {
-      it('should support partials', function(done) {
-        var path = 'test/fixtures/' + name + '/partials.' + name;
-        var locals = { user: user, partials: { partial: 'user' } };
-        cons[name](path, locals, function(err, html) {
-          if (err) return done(err);
-          html.should.equal('<p>Tobi</p>');
-          done();
-        });
-      });
-      it('should support absolute path partial', function(done) {
-        var path = 'test/fixtures/' + name + '/partials.' + name;
-        var locals = {user: user, partials: {partial: join(__dirname, '/../../test/fixtures/', name, '/user') }};
-        cons[name](path, locals, function(err, html) {
-          if (err) return done(err);
-          html.should.equal('<p>Tobi</p>');
-          done();
-        });
-      });
-      it('should support relative path partial', function(done) {
-        var path = 'test/fixtures/' + name + '/partials.' + name;
-        var locals = {user: user, partials: {partial: '../' + name + '/user' }};
-        cons[name](path, locals, function(err, html) {
-          if (err) return done(err);
-          html.should.equal('<p>Tobi</p>');
-          done();
-        });
-      });
-    }
+  test.afterEach(function () {
+    fs.readFile = readFile;
+    fs.readFileSync = readFileSync;
   });
+
+  if (name === 'dust' || name === 'arc-templates') {
+    test(`${name} partials should support rendering a partial`, async (t) => {
+      const str = fs
+        .readFileSync(
+          'test/fixtures/' + getName(name) + '/user_partial.' + getName(name)
+        )
+        .toString();
+      const locals = {
+        user,
+        views: './test/fixtures/' + getName(name)
+      };
+
+      const html = await new Promise((resolve, reject) => {
+        cons[getName(name)].render(str, locals, function (err, html) {
+          if (err) return reject(err);
+          resolve(html);
+        });
+      });
+
+      t.is(html, '<p>Tobi from partial!</p><p>Tobi</p>');
+    });
+  } else {
+    test(`${name} partials should support partials`, async (t) => {
+      const path =
+        'test/fixtures/' + getName(name) + '/partials.' + getName(name);
+      const locals = { user, partials: { partial: 'user' } };
+
+      const html = await new Promise((resolve, reject) => {
+        cons[getName(name)](path, locals, function (err, html) {
+          if (err) return reject(err);
+          resolve(html);
+        });
+      });
+
+      t.is(html, '<p>Tobi</p>');
+    });
+    test(`${name} partials should support absolute path partial`, async (t) => {
+      const path =
+        'test/fixtures/' + getName(name) + '/partials.' + getName(name);
+      const locals = {
+        user,
+        partials: {
+          partial: join(__dirname, '/../../test/fixtures/', name, '/user')
+        }
+      };
+
+      const html = await new Promise((resolve, reject) => {
+        cons[getName(name)](path, locals, function (err, html) {
+          if (err) return reject(err);
+          resolve(html);
+        });
+      });
+
+      t.is(html, '<p>Tobi</p>');
+    });
+    test(`${name} partials should support relative path partial`, async (t) => {
+      const path =
+        'test/fixtures/' + getName(name) + '/partials.' + getName(name);
+      const locals = {
+        user,
+        partials: { partial: '../' + getName(name) + '/user' }
+      };
+
+      const html = await new Promise((resolve, reject) => {
+        cons[getName(name)](path, locals, function (err, html) {
+          if (err) return reject(err);
+          resolve(html);
+        });
+      });
+      t.is(html, '<p>Tobi</p>');
+    });
+  }
 };

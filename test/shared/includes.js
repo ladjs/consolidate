@@ -1,52 +1,66 @@
-var cons = require('../../');
-var fs = require('fs');
+const fs = require('node:fs');
+const test = require('ava');
+const cons = require('../../');
 
-exports.test = function(name) {
-  var user = { name: 'Tobi' };
+function getName(name) {
+  return name === 'liquid-node' ? 'liquid' : name;
+}
 
-  describe(name, function() {
+exports.test = function (name) {
+  const user = { name: 'Tobi' };
 
-    it('should support includes', function(done) {
-      var str = fs.readFileSync('test/fixtures/' + name + '/include.' + name).toString();
+  test(`${name} includes should support includes`, async (t) => {
+    const str = fs
+      .readFileSync(
+        'test/fixtures/' + getName(name) + '/include.' + getName(name)
+      )
+      .toString();
 
-      var viewsDir = 'test/fixtures/' + name;
-      var locals = { user: user, settings: { views: viewsDir } };
+    const viewsDir = 'test/fixtures/' + getName(name);
+    const locals = { user, settings: { views: viewsDir } };
 
-      if (name === 'liquid' || name === 'arc-templates') {
-        locals.includeDir = viewsDir;
-      }
+    if (
+      name === 'liquid' ||
+      name === 'liquid-node' ||
+      name === 'arc-templates'
+    ) {
+      locals.includeDir = viewsDir;
+    }
 
-      cons[name].render(str, locals, function(err, html) {
-        if (err) return done(err);
-        try {
-          if (name === 'liquid') {
-            html.should.eql('<p>Tobi</p><section></section><footer></footer>');
-          } else {
-            html.should.eql('<p>Tobi</p>');
-          }
-          return done();
-        } catch (e) {
-          return done(e);
-        }
+    const html = await new Promise((resolve, reject) => {
+      cons[getName(name)].render(str, locals, function (err, html) {
+        if (err) return reject(err);
+        resolve(html);
       });
     });
 
-    if (name === 'nunjucks') {
-      it('should support extending views', function(done) {
-        var str = fs.readFileSync('test/fixtures/' + name + '/layouts.' + name).toString();
-
-        var locals = {user: user, settings: {views: 'test/fixtures/' + name}};
-
-        cons[name].render(str, locals, function(err, html) {
-          if (err) return done(err);
-          try {
-            html.should.eql('<header></header><p>Tobi</p><footer></footer>');
-            return done();
-          } catch (e) {
-            return done(e);
-          }
-        });
-      });
+    if (name === 'liquid' || name === 'liquid-node') {
+      t.is(html, '<p>Tobi</p><section></section><footer></footer>');
+    } else {
+      t.is(html, '<p>Tobi</p>');
     }
   });
+
+  if (name === 'nunjucks') {
+    test(`${name} includes should support extending views`, async (t) => {
+      const str = fs
+        .readFileSync(
+          'test/fixtures/' + getName(name) + '/layouts.' + getName(name)
+        )
+        .toString();
+
+      const locals = {
+        user,
+        settings: { views: 'test/fixtures/' + getName(name) }
+      };
+
+      const html = await new Promise((resolve, reject) => {
+        cons[getName(name)].render(str, locals, function (err, html) {
+          if (err) return reject(err);
+          resolve(html);
+        });
+      });
+      t.is(html, '<header></header><p>Tobi</p><footer></footer>');
+    });
+  }
 };

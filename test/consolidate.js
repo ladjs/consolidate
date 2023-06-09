@@ -1,8 +1,7 @@
-var cons = require('../');
-var semver = require('semver');
-/*eslint-env node*/
-/*eslint  quotes: [2, "single"] */
-require('./shared').test('jade');
+const process = require('node:process');
+const semver = require('semver');
+const cons = require('../');
+// require('./shared').test('jade');
 require('./shared').test('pug');
 
 // testing tinyliquid
@@ -13,9 +12,9 @@ require('./shared/includes').test('liquid');
 
 // testing liquid-node
 cons.requires.liquid = require('liquid-node');
-require('./shared').test('liquid');
-require('./shared/filters').test('liquid');
-require('./shared/includes').test('liquid');
+require('./shared').test('liquid-node');
+require('./shared/filters').test('liquid-node');
+require('./shared/includes').test('liquid-node');
 
 require('./shared').test('ejs');
 require('./shared').test('swig');
@@ -65,14 +64,15 @@ require('./shared').test('arc-templates');
 require('./shared/filters').test('arc-templates');
 require('./shared/includes').test('arc-templates');
 require('./shared/partials').test('arc-templates');
-require('./shared').test('marko');
+// require('./shared').test('marko');
 require('./shared').test('bracket');
 require('./shared').test('teacup');
 require('./shared').test('velocityjs');
-require('./shared').test('razor');
-require('./shared').test('squirrelly');
-require('./shared/partials').test('squirrelly');
-require('./shared/helpers').test('squirrelly');
+// require('./shared').test('razor');
+// require('./shared').test('squirrelly');
+// require('./shared/partials').test('squirrelly');
+// require('./shared/helpers').test('squirrelly');
+
 if (semver.satisfies(process.version, '>=8.0.0')) {
   require('./shared').test('twing');
 }

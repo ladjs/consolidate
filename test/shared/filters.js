@@ -1,25 +1,37 @@
-var cons = require('../../');
-var fs = require('fs');
+const fs = require('node:fs');
+const test = require('ava');
+const cons = require('../../');
 
-exports.test = function(name) {
-  var user = { name: 'Tobi' };
+function getName(name) {
+  return name === 'liquid-node' ? 'liquid' : name;
+}
 
-  describe(name, function() {
+exports.test = function (name) {
+  const user = { name: 'Tobi' };
 
-    // Use case: return upper case string.
-    it('should support filters', function(done) {
-      var str = fs.readFileSync('test/fixtures/' + name + '/filters.' + name).toString();
+  // Use case: return upper case string.
+  test(`${name} filters should support filters`, async (t) => {
+    const str = fs
+      .readFileSync(
+        'test/fixtures/' + getName(name) + '/filters.' + getName(name)
+      )
+      .toString();
 
-      var locals = { user: user,
-        filters: { toupper: function(object) {
+    const locals = {
+      user,
+      filters: {
+        toupper(object) {
           return object.toUpperCase();
-        }}};
+        }
+      }
+    };
 
-      cons[name].render(str, locals, function(err, html) {
-        if (err) return done(err);
-        html.should.eql('TOBI');
-        return done();
+    const html = await new Promise((resolve, reject) => {
+      cons[getName(name)].render(str, locals, function (err, html) {
+        if (err) return reject(err);
+        resolve(html);
       });
     });
+    t.is(html, 'TOBI');
   });
 };

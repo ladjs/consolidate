@@ -1,117 +1,129 @@
+const fs = require('node:fs');
+const test = require('ava');
+const cons = require('../../');
 
-var cons = require('../../');
-var fs = require('fs');
-var readFile = fs.readFile;
-var readFileSync = fs.readFileSync;
+const { readFile } = fs;
+const { readFileSync } = fs;
 
-exports.test = function(name) {
-  var user = { name: 'Tobi' };
+function getName(name) {
+  return name === 'liquid-node' ? 'liquid' : name;
+}
 
-  describe(name, function() {
-    afterEach(function() {
-      fs.readFile = readFile;
-      fs.readFileSync = readFileSync;
+exports.test = function (name) {
+  const user = { name: 'Tobi' };
+
+  test.afterEach.always(function () {
+    fs.readFile = readFile;
+    fs.readFileSync = readFileSync;
+  });
+
+  test(`${name} should support locals`, async (t) => {
+    const path = 'test/fixtures/' + getName(name) + '/user.' + getName(name);
+    const locals = { user };
+    const html = await new Promise((resolve, reject) => {
+      cons[getName(name)](path, locals, function (err, html) {
+        if (err) return reject(err);
+        resolve(html);
+      });
     });
+    t.regex(html, /Tobi/);
+  });
 
-    it('should support locals', function(done) {
-      var path = 'test/fixtures/' + name + '/user.' + name;
-      var locals = { user: user };
-      cons[name](path, locals, function(err, html) {
-        if (err) return done(err);
-        html.should.match(/Tobi/);
-        done();
+  test(`${name} should not cache by default`, async (t) => {
+    const path = 'test/fixtures/' + getName(name) + '/user.' + getName(name);
+    const locals = { user };
+    let calls = 0;
+
+    fs.readFileSync = function (...args) {
+      ++calls;
+      return Reflect.apply(readFileSync, this, args);
+    };
+
+    fs.readFile = function (...args) {
+      ++calls;
+      Reflect.apply(readFile, this, args);
+    };
+
+    let html;
+    html = await new Promise((resolve, reject) => {
+      cons[getName(name)](path, locals, function (err, html) {
+        if (err) return reject(err);
+        resolve(html);
+      });
+    });
+    t.regex(html, /Tobi/);
+    html = await new Promise((resolve, reject) => {
+      cons[getName(name)](path, locals, function (err, html) {
+        if (err) return reject(err);
+        resolve(html);
+      });
+    });
+    t.regex(html, /Tobi/);
+    t.is(calls, name === 'atpl' ? 4 : 2);
+  });
+
+  test(`${name} should support caching`, async (t) => {
+    const path = 'test/fixtures/' + getName(name) + '/user.' + getName(name);
+    const locals = { user, cache: true };
+
+    let html;
+    html = await new Promise((resolve, reject) => {
+      cons[getName(name)](path, locals, function (err, html) {
+        if (err) return reject(err);
+        resolve(html);
       });
     });
 
-    it('should not cache by default', function(done) {
-      var path = 'test/fixtures/' + name + '/user.' + name;
-      var locals = { user: user };
-      var calls = 0;
+    fs.readFile = function (path) {
+      throw new Error('fs.readFile() called with ' + path);
+    };
 
-      fs.readFileSync = function() {
-        ++calls;
-        return readFileSync.apply(this, arguments);
-      };
+    t.regex(html, /Tobi/);
 
-      fs.readFile = function() {
-        ++calls;
-        readFile.apply(this, arguments);
-      };
-
-      cons[name](path, locals, function(err, html) {
-        if (err) return done(err);
-        html.should.match(/Tobi/);
-        cons[name](path, locals, function(err, html) {
-          if (err) return done(err);
-          html.should.match(/Tobi/);
-          calls.should.equal(name === 'atpl' ? 4 : 2);
-          done();
-        });
+    html = await new Promise((resolve, reject) => {
+      cons[getName(name)](path, locals, function (err, html) {
+        if (err) return reject(err);
+        resolve(html);
       });
     });
 
-    it('should support caching', function(done) {
-      var path = 'test/fixtures/' + name + '/user.' + name;
-      var locals = { user: user, cache: true };
+    t.regex(html, /Tobi/);
+  });
 
-      cons[name](path, locals, function(err, html) {
-        if (err) return done(err);
-
-        fs.readFile = function(path) {
-          done(new Error('fs.readFile() called with ' + path));
-        };
-
-        html.should.match(/Tobi/);
-        cons[name](path, locals, function(err, html) {
-          if (err) return done(err);
-          html.should.match(/Tobi/);
-          done();
-        });
+  test(`${name} should support rendering a string`, async (t) => {
+    const str = fs
+      .readFileSync('test/fixtures/' + getName(name) + '/user.' + getName(name))
+      .toString();
+    const locals = { user };
+    const html = await new Promise((resolve, reject) => {
+      cons[getName(name)].render(str, locals, function (err, html) {
+        if (err) return reject(err);
+        resolve(html);
       });
     });
+    t.regex(html, /Tobi/);
+  });
 
-    it('should support rendering a string', function(done) {
-      var str = fs.readFileSync('test/fixtures/' + name + '/user.' + name).toString();
-      var locals = { user: user };
-      cons[name].render(str, locals, function(err, html) {
-        if (err) return done(err);
-        html.should.match(/Tobi/);
-        done();
-      });
-    });
+  test(`${name} should return a promise if no callback provided`, async (t) => {
+    const path = 'test/fixtures/' + getName(name) + '/user.' + getName(name);
+    const locals = { user };
+    const html = await cons[getName(name)](path, locals);
+    t.regex(html, /Tobi/);
+    t.pass();
+  });
 
-    it('should return a promise if no callback provided', function(done) {
-      var path = 'test/fixtures/' + name + '/user.' + name;
-      var locals = { user: user };
-      var result = cons[name](path, locals);
+  test(`${name} should return a promise if no callback provided (string)`, async (t) => {
+    const str = fs
+      .readFileSync('test/fixtures/' + getName(name) + '/user.' + getName(name))
+      .toString();
+    const locals = { user };
+    const html = await cons[getName(name)].render(str, locals);
+    t.regex(html, /Tobi/);
+    t.pass();
+  });
 
-      result.then(function(html) {
-        html.should.match(/Tobi/);
-        done();
-      })
-        .catch(function(err) {
-          done(err);
-        });
-    });
-
-    it('should return a promise if no callback provided (string)', function(done) {
-      var str = fs.readFileSync('test/fixtures/' + name + '/user.' + name).toString();
-      var locals = { user: user };
-      var result = cons[name].render(str, locals);
-
-      result.then(function(html) {
-        html.should.match(/Tobi/);
-        done();
-      })
-        .catch(function(err) {
-          done(err);
-        });
-    });
-
-    it('should be exposed in the requires object', function() {
-      var should = require('should');
-      var requiredName = name;
-      should.exist(cons.requires[requiredName]);
-    });
+  test(`${name} should be exposed in the requires object`, (t) => {
+    const requiredName = getName(name);
+    t.true(cons.requires[requiredName] !== undefined);
   });
 };
