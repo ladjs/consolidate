@@ -208,6 +208,14 @@ cons.requires.nunjucks.addFilter('foo', function() {
 * `React` To render content into an HTML base template (eg. `index.html` of your React app), pass the path of the template with `options.base`.
 
 
+## Contributors
+
+| Name               | Website                    |
+| ------------------ | -------------------------- |
+| **Forward Email**  | <https://forwardemail.net> |
+| **TJ Holowaychuk** |                            |
+
+
 ## License
 
-[MIT](LICENSE) © [Forward Email](https://forwardemail.net)
+[MIT](LICENSE) © TJ Holowaychuk

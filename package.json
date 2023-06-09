@@ -2,7 +2,7 @@
   "name": "@ladjs/consolidate",
   "description": "Modern and maintained fork of the template engine consolidation library. Maintained and supported by Forward Email <https://forwardemail.net>, the 100% open-source and privacy-focused email service.",
   "version": "0.16.0",
-  "author": "Forward Email (https://forwardemail.net)",
+  "author": "TJ Holowaychuk <tj@vision-media.ca>",
   "bugs": {
     "url": "https://github.com/ladjs/consolidate/issues"
   },
