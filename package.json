@@ -6,6 +6,9 @@
   "bugs": {
     "url": "https://github.com/ladjs/consolidate/issues"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "contributors": [
     "Forward Email (https://forwardemail.net)",
     "TJ Holowaychuk <tj@vision-media.ca>"
