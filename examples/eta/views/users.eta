@@ -1,0 +1,7 @@
+<h1><%= that.title %></h1>
+<ul>
+  <% that.users.forEach((user) => { %>
+    <li><%= user.name %></li>
+    <% /* You can't see me */ %>
+  <% }); %>
+</ul>
