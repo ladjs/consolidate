@@ -17,6 +17,7 @@ require('./shared/filters').test('liquid-node');
 require('./shared/includes').test('liquid-node');
 
 require('./shared').test('ejs');
+require('./shared').test('eta');
 require('./shared').test('swig');
 require('./shared').test('jazz');
 require('./shared').test('jqtpl');
