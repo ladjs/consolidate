@@ -1,0 +1,5 @@
+<h1><%= that.title %></h1>
+<p>Welcome to the <%= that.title %> demo. Click a link:</p>
+<ul>
+  <li><a href="/users">/users</a></li>
+</ul>
